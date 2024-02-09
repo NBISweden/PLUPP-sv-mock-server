@@ -1,6 +1,6 @@
 async function renderApp(appName, appData, element, configElement) {
   const dataRoot = `../app_data/${appName}`
-  const urlRoot = "http://localhost:3333/view"
+  const urlRoot = `http://${window.location.host}/view`
 
   requirejs.config({
     paths: {
