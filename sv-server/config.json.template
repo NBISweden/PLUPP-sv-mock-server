@@ -1,0 +1,6 @@
+{
+    "directories": {
+        "view": "./view"
+    },
+    "app_dir": "./apps"
+}

@@ -1,0 +1,59 @@
+<html>
+<head>
+    <script data-main="hack.js" src="vendor/require.js"></script>
+</head>
+    <script></script>
+    <style>
+body {
+    background: #eee;
+}
+
+#config {
+    max-width: 600px;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    box-sizing: border-box;
+    border: solid 1px #000;
+    padding: 15px;
+    margin: 20px;
+    background: #fff;
+}
+
+#config .panel-heading > * {
+    margin: 0;
+    margin-bottom: 15px;
+}
+
+#config .form-group {
+    display: flex;
+    margin-bottom: 5px;
+}
+
+#config .form-group > * {
+    flex: 1;
+}
+
+#root {
+    background: #fff;
+    max-width: 1000px;
+    margin: auto;
+    padding: 15px;
+}
+    </style>
+</head>
+<body>
+    <form id="config" method="GET"></form>
+    <div id="root">
+        <ul>
+            <li><a href="?appName=forecast-for-startpage">Forecast for startpage</a></li>
+            <li><a href="?appName=risk-forecast">Risk forecast</a></li>
+            <li>
+                Forecast for cities:
+                <ul>
+                    <li><a href="?appName=forecast-for-cities&name=Stockholm">Stockholm</a></li>
+                    <li><a href="?appName=forecast-for-cities&name=Borlänge">Borlänge</a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+</body>
+</html>

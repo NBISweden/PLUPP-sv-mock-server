@@ -1,0 +1,13 @@
+version: "3.4"
+
+services:
+  sv-server:
+    build:
+      dockerfile: containers/sv-server/Dockerfile
+    volumes:
+      - app_data:/opt/app_data/apps
+    ports:
+      - "127.0.0.1:3333:8000"
+  
+volumes:
+  app_data:

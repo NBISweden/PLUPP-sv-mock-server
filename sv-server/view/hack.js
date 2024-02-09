@@ -1,0 +1,72 @@
+async function renderApp(appName, appData, element, configElement) {
+  const dataRoot = `../app_data/${appName}`
+  const urlRoot = "http://localhost:3333/view"
+
+  requirejs.config({
+    paths: {
+      'react': 'vendor/react',
+      'react-dom': 'vendor/react-dom',
+      [appName]: `${dataRoot}/main`,
+      'requester': 'requester-mock',
+      'underscore': 'vendor/underscore',
+    }
+  });
+
+  async function loadCss(url) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    const regex = new RegExp(`\.\.\/\/webapp-files\/${appName}\/0\.0\.1`, "gi");
+    const cssData = (await (await fetch(url)).text()).replace(regex, `${urlRoot}/${dataRoot}/resource`)
+    dataUrl = `data:text/css;base64,${btoa(cssData)}`
+    link.href = dataUrl;
+    document.getElementsByTagName('HEAD')[0].appendChild(link);
+  }
+  
+  requirejs([appName, "underscore"], function(main, _) {
+    async function run() {
+      await loadCss(`${dataRoot}/css/main.css`)
+      const localizationData = await (await fetch(`${urlRoot}/${dataRoot}/i18n/sv.json`)).json();
+      const defaults = await (await fetch(`${urlRoot}/${dataRoot}/appDataDefaults.json`)).json();
+      const currentAppData = {...defaults.appData, ...appData}
+      if (configElement) {
+        function i18n(term) {
+          return localizationData[term] === undefined ? `{${term}}` : localizationData[term];
+        }
+        const templateData = await (await fetch(`${urlRoot}/${dataRoot}/config/index.html`)).text();
+        const template = _.template(templateData);
+        const configView = template({i18n: i18n});
+        configElement.innerHTML = configView + `<input type="hidden" name="appName" value="${appName}"><input type="submit" value="Submit">`;
+        for (const [key, value] of Object.entries(currentAppData)) {
+          const el = configElement.querySelector(`[name="${key}"]`);
+          if (el) {
+            el.value = value;
+          }
+        }
+      }
+      main.default(currentAppData, element)
+    }
+    run()
+  }
+);
+}
+
+function main() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const appName = urlParams.get('appName');
+  const appData = Array.from(urlParams.entries()).reduce((acc, [key, value]) => ({...acc, [key]: value}), {})
+  const root = document.getElementById('root')
+  const config = document.getElementById('config')
+  if (appName === "*") {
+    ["forecast-for-cities", "forecast-for-startpage", "risk-forecast"].forEach((appName) => {
+      root.appendChild(document.createElement("hr"));
+      const appNode = document.createElement("div");
+      root.appendChild(appNode)
+      renderApp(appName, {}, appNode)
+    })
+  } else if (appName) {
+    renderApp(appName, appData, root, config)
+  }
+}
+
+main()
