@@ -1,11 +1,16 @@
 <html>
 <head>
-    <script data-main="hack.js" src="vendor/require.js"></script>
 </head>
     <script></script>
     <style>
 body {
     background: #eee;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+
+.uploaded_by {
+    font-size: 80%;
+    font-style: italic;
 }
 
 #config {
@@ -41,19 +46,23 @@ body {
     </style>
 </head>
 <body>
-    <form id="config" method="GET"></form>
     <div id="root">
-        <ul>
-            <li><a href="?appName=forecast-for-startpage">Forecast for startpage</a></li>
-            <li><a href="?appName=risk-forecast">Risk forecast</a></li>
-            <li>
-                Forecast for cities:
-                <ul>
-                    <li><a href="?appName=forecast-for-cities&name=Stockholm">Stockholm</a></li>
-                    <li><a href="?appName=forecast-for-cities&name=Borlänge">Borlänge</a></li>
-                </ul>
-            </li>
-        </ul>
     </div>
 </body>
+<script>
+async function main(rootElement, rootUrl) {
+    const apps = await (await fetch(`${rootUrl}/apps`)).json()
+    const appWithMeta = await Promise.all(
+        apps.map(
+            async (app) => ({
+                ...app,
+                meta: await (await fetch(app.meta_url)).json(),
+            })
+        )
+    )
+    const content = appWithMeta.map(app => `<li><a href="${rootUrl}/view/view.html?appName=${app.name}">${app.meta.name}</a> <span class="uploaded_by">(${app.meta.uploaded_by || "Unknown"})</span></li>`).join("")
+    rootElement.innerHTML = `<h2>Available apps</h2><ul>${content}</ul>`
+}
+main(document.getElementById('root'), `http://${window.location.host}`)
+</script>
 </html>

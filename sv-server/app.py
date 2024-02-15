@@ -22,7 +22,7 @@ class AppDescriptor(BaseModel):
 
 @functools.lru_cache()
 def get_config_path():
-    return os.getenv("SITEVISION_CONFIG_PATH", "./config.json")
+    return os.getenv("SV_CONFIG_PATH", "./config.json")
 
 
 @functools.lru_cache()
@@ -55,6 +55,7 @@ async def upload_app(
         "repository": repository,
         "site_name": site_name,
         "path": app_path,
+        "uploaded_by": credentials.username,
     }
 
     with open(f"{app_path}/_meta.json", "w") as f:

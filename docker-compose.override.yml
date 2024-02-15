@@ -1,0 +1,7 @@
+version: "3.4"
+
+services:
+  sv-server:
+    volumes:
+      - app_data:/opt/app/data/apps
+      - ./sv-server:/opt/app/src
