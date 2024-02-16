@@ -5,3 +5,4 @@ services:
     volumes:
       - app_data:/opt/app/data/apps
       - ./sv-server:/opt/app/src
+      - ./containers/sv-server/config.json:/opt/app/config.json

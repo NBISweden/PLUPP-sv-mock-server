@@ -1,4 +1,5 @@
 {
+    "root_redirect": "view",
     "directories": {
         "view": "/opt/app/src/view"
     },

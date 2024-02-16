@@ -4,7 +4,15 @@ import functools
 import zipfile
 from slugify import slugify
 from typing import Annotated
-from fastapi import FastAPI, APIRouter, Depends, Request, UploadFile
+from fastapi import (
+    FastAPI,
+    APIRouter,
+    Depends,
+    Request,
+    UploadFile,
+    HTTPException,
+)
+from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel, HttpUrl
@@ -90,6 +98,22 @@ async def list_apps(
         )
         for app_name in os.listdir(app_dir)
     ]
+
+
+@app_router.get("/")
+async def redirect_typer(
+    request: Request,
+    settings=Depends(get_settings)
+):
+    root_redirect = settings.get("root_redirect", None)
+    if root_redirect:
+        redirect = request.url.replace(
+            path=root_redirect,
+            query=""
+        )
+        return RedirectResponse(redirect)
+    else:
+        raise HTTPException(status_code=404, detail=f"Item not found")
 
 
 def create_app(config_path=get_config_path()):
