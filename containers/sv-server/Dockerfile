@@ -8,6 +8,9 @@ ENV SV_CONFIG_PATH="$CONFIG_PATH"
 
 RUN groupadd -g "$GID" python && useradd -u "$UID" -g "$GID" python
 
+RUN apt-get update -y
+RUN apt-get install -y nodejs
+
 COPY ./sv-server/requirements.txt /opt/app/requirements.txt
 RUN python -m pip install -r /opt/app/requirements.txt
 

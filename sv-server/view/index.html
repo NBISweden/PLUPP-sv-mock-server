@@ -13,35 +13,21 @@ body {
     font-style: italic;
 }
 
-#config {
-    max-width: 600px;
-    font-family: Verdana, Geneva, Tahoma, sans-serif;
-    box-sizing: border-box;
-    border: solid 1px #000;
-    padding: 15px;
-    margin: 20px;
-    background: #fff;
-}
-
-#config .panel-heading > * {
-    margin: 0;
-    margin-bottom: 15px;
-}
-
-#config .form-group {
-    display: flex;
-    margin-bottom: 5px;
-}
-
-#config .form-group > * {
-    flex: 1;
-}
-
-#root {
+.container {
     background: #fff;
     max-width: 1000px;
     margin: auto;
     padding: 15px;
+    margin-bottom: 15px;
+}
+
+.container .error {
+    font-size: 80%;
+    line-height: 150%;
+    padding: 15px;
+    max-height: 200px;
+    overflow: auto;
+    background: #eee;
 }
     </style>
 </head>
@@ -50,6 +36,12 @@ body {
     </div>
 </body>
 <script>
+function cleanText(text) {
+    const e = document.createElement("p");
+    e.textContent = text;
+    console.log()
+    return e.innerHTML;
+}
 async function main(rootElement, rootUrl) {
     const apps = await (await fetch(`${rootUrl}/apps`)).json()
     const appWithMeta = await Promise.all(
@@ -60,8 +52,28 @@ async function main(rootElement, rootUrl) {
             })
         )
     )
+    appWithMeta.forEach(app => {
+        try {
+            console.log(`${app.name}: ${app.meta.static_page.error || "No error"}`)
+        } catch (e) {
+            console.log(`${app.name}: No static data`)
+        }
+    })
     const content = appWithMeta.map(app => `<li><a href="${rootUrl}/view/view.html?appName=${app.name}">${app.meta.name}</a> <span class="uploaded_by">(${app.meta.uploaded_by || "Unknown"})</span></li>`).join("")
-    rootElement.innerHTML = `<h2>Available apps</h2><ul>${content}</ul>`
+    const errorContent = appWithMeta.filter(app => app.meta.static_page && app.meta.static_page.error).map(app => (
+        `
+        <a href="${rootUrl}/view/view.html?appName=${app.name}"><h3>${app.meta.name}</h3></a>
+        <h4>Static</h4>
+        ${app.meta.static_page.result}
+        <h4>Error</h4>
+        <p class="error">${cleanText(app.meta.static_page.error)}</p>`
+    )).join("")
+    rootElement.innerHTML = (
+        `
+        <div class="container"><h2>Available apps</h2><ul>${content}</ul></div>
+        <div class="container"><h2>App info</h2>${errorContent}</div>
+        `
+    )
 }
 main(document.getElementById('root'), `http://${window.location.host}`)
 </script>

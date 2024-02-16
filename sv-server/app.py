@@ -2,6 +2,7 @@ import os
 import json
 import functools
 import zipfile
+import asyncio
 from slugify import slugify
 from typing import Annotated
 from fastapi import (
@@ -57,6 +58,10 @@ async def upload_app(
     with zipfile.ZipFile(file.file, "r") as zip_ref:
         zip_ref.extractall(app_path)
     
+    static_page = await run_script(
+        f"node runtime/runtime.js '{app_path}/index.js'"
+    )
+
     meta = {
         "id": app_id,
         "name": app_name,
@@ -64,6 +69,7 @@ async def upload_app(
         "site_name": site_name,
         "path": app_path,
         "uploaded_by": credentials.username,
+        "static_page": static_page
     }
 
     with open(f"{app_path}/_meta.json", "w") as f:
@@ -114,6 +120,22 @@ async def redirect_typer(
         return RedirectResponse(redirect)
     else:
         raise HTTPException(status_code=404, detail=f"Item not found")
+
+
+async def run_script(cmd):
+    proc = await asyncio.create_subprocess_shell(
+        cmd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE
+    )
+
+    stdout, stderr = await proc.communicate()
+
+    return {
+        "result": stdout.decode() if stdout else None,
+        "error": stderr.decode() if stderr else None,
+        "code": proc.returncode
+    }
 
 
 def create_app(config_path=get_config_path()):
