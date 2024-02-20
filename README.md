@@ -28,3 +28,26 @@ Use a `dev_properties.json` as follows:
 ```
 
 Go to `http://sv-server.local:3333/view/`
+
+## Mocking responses
+If you want to test some function without having to rely on an API being available or having the correct data you can use the `sv-server/view/data-overrides.json`. Just add any URL, which response you would like to override, as a key to the `JSON` structure and add your prefered response data as the corresponding value. An example follows:
+
+```json
+{
+    "https://api.pollenrapporten.se/v1/forecasts?region_id=2a2a2a2a-2a2a-4a2a-aa2a-2a2a2a303a35&current=true": {
+        "_meta": {
+            "totalRecords": 1,
+            "offset": 0,
+            "limit": 100,
+            "count": 1
+        },
+        "_links": [
+            {
+                "href": "https://api.pollenrapporten.se/v1/forecasts?offset=0&limit=100&region_id=2a2a2a2a-2a2a-4a2a-aa2a-2a2a2a303a34&current=True",
+                "rel": "self"
+            }
+        ],
+        "items": []
+    }
+}
+```
