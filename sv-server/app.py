@@ -59,7 +59,7 @@ async def upload_app(
         zip_ref.extractall(app_path)
     
     static_page = await run_script(
-        f"node runtime/runtime.js '{app_path}/index.js'"
+        f"node runtime/runtime.js '{app_path}/index.js' '{app_path}/appDataDefaults.json'"
     )
 
     meta = {
@@ -130,9 +130,17 @@ async def run_script(cmd):
     )
 
     stdout, stderr = await proc.communicate()
+    json_result = None
+    result = stdout.decode() if stdout else None
+
+    try:
+        json_result = json.loads(result)
+    except (json.decoder.JSONDecodeError, TypeError):
+        pass
 
     return {
-        "result": stdout.decode() if stdout else None,
+        "result": result,
+        "json": json_result,
         "error": stderr.decode() if stderr else None,
         "code": proc.returncode
     }

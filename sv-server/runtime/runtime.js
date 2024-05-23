@@ -9,6 +9,8 @@ const router = {
     this._routes[path](req, res)
   }
 }
+const appDataDefaults = JSON.parse(fs.readFileSync(process.argv[3] || "./appDataDefaults.json", 'utf8'))
+
 const svContext = vm.createContext({
   require(module) {
     return {
@@ -20,7 +22,9 @@ const svContext = vm.createContext({
         get() {}
       },
       "appData": {
-        get() {}
+        get(key) {
+          return appDataDefaults.appData && appDataDefaults.appData[key]
+        }
       },
       "requester": {
         get() {}
@@ -29,18 +33,25 @@ const svContext = vm.createContext({
   },
 })
 
+
 const scriptData = fs.readFileSync(process.argv[2] || "./index.js")
 const script = new vm.Script(scriptData)
+const output = {
+  pageData: null,
+  initialState: null,
+}
 
 const res = {
-  agnosticRender(data) {
-    console.log(data)
+  agnosticRender(data, initialState) {
+    output.pageData = data;
+    output.initialState = initialState
   }
 }
 try {
   script.runInContext(svContext)
   router.exec("/", null, res)
 } catch (e) {
-  console.log(`<span class="error">${e.name}: ${e.message}</span>`)
+  output.pageData = `<span class="error">${e.name}: ${e.message}</span>`;
   throw(e)
 }
+console.log(JSON.stringify(output))
