@@ -58,9 +58,11 @@ async def upload_app(
     with zipfile.ZipFile(file.file, "r") as zip_ref:
         zip_ref.extractall(app_path)
     
+    print(f"Generating static page: {app_id}")
     static_page = await run_script(
         f"node runtime/runtime.js '{app_path}/index.js' '{app_path}/appDataDefaults.json'"
     )
+    print(f"Static page done: {static_page}")
 
     meta = {
         "id": app_id,

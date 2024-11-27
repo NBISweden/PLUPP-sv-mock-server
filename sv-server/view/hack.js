@@ -42,7 +42,7 @@ async function renderApp(appName, appData, element, configElement) {
       const meta = await (await fetch(`${urlRoot}/${dataRoot}/_meta.json`)).json();
       const localizationData = await (await fetch(`${urlRoot}/${dataRoot}/i18n/sv.json`)).json();
       const defaults = await (await fetch(`${urlRoot}/${dataRoot}/appDataDefaults.json`)).json();
-      const currentAppData = {...defaults.appData, ...appData}
+      const currentAppData = {...defaults.appData, ...appData, ...meta.initialState}
       if (configElement) {
         function i18n(term) {
           return localizationData[term] === undefined ? `{${term}}` : localizationData[term];
