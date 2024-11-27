@@ -35,19 +35,24 @@ If you want to test some function without having to rely on an API being availab
 ```json
 {
     "https://api.pollenrapporten.se/v1/forecasts?region_id=2a2a2a2a-2a2a-4a2a-aa2a-2a2a2a303a35&current=true": {
-        "_meta": {
+        "data": {
+            "_meta": {
             "totalRecords": 1,
             "offset": 0,
             "limit": 100,
             "count": 1
-        },
-        "_links": [
-            {
-                "href": "https://api.pollenrapporten.se/v1/forecasts?offset=0&limit=100&region_id=2a2a2a2a-2a2a-4a2a-aa2a-2a2a2a303a34&current=True",
-                "rel": "self"
-            }
-        ],
-        "items": []
+            },
+            "_links": [
+                {
+                    "href": "https://api.pollenrapporten.se/v1/forecasts?offset=0&limit=100&region_id=2a2a2a2a-2a2a-4a2a-aa2a-2a2a2a303a34&current=True",
+                    "rel": "self"
+                }
+            ],
+            "items": []
+        }
+    },
+    "https://api.pollenrapporten.se/v1/pollen-types?offset=0&limit=100": {
+        "ref": "data-overrides/pollen-types.json"
     }
 }
 ```
