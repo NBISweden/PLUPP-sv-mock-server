@@ -1,11 +1,24 @@
 async function renderApp(appName, appData, element, configElement) {
+  const urlParams = new URLSearchParams(window.location.search);
   const dataRoot = `../app_data/${appName}`
   const urlRoot = `http://${window.location.host}/view`
+  const defaultEnv = 'development'
+  const env = urlParams.get("_env") || defaultEnv
 
-  requirejs.config({
-    paths: {
+  const reactEnvSelect = {
+    'development': {
+      'react': 'vendor/react.development',
+      'react-dom': 'vendor/react-dom.development',
+    },
+    'production': {
       'react': 'vendor/react',
       'react-dom': 'vendor/react-dom',
+    }
+  }
+  const reactEnv = reactEnvSelect[env] || reactEnvSelect[defaultEnv]
+  requirejs.config({
+    paths: {
+      ...reactEnv,
       [appName]: `${dataRoot}/main`,
       'requester': 'requester-mock',
       'underscore': 'vendor/underscore',
