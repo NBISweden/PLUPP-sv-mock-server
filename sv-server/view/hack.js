@@ -38,7 +38,8 @@ async function renderApp(appName, appData, element, configElement) {
   
   requirejs([appName, "underscore"], function(main, _) {
     async function run() {
-      await loadCss(`${dataRoot}/css/main.css`)
+      await loadCss(`${dataRoot}/css/main.css`);
+      const meta = await (await fetch(`${urlRoot}/${dataRoot}/_meta.json`)).json();
       const localizationData = await (await fetch(`${urlRoot}/${dataRoot}/i18n/sv.json`)).json();
       const defaults = await (await fetch(`${urlRoot}/${dataRoot}/appDataDefaults.json`)).json();
       const currentAppData = {...defaults.appData, ...appData}
@@ -56,6 +57,12 @@ async function renderApp(appName, appData, element, configElement) {
             el.value = value;
           }
         }
+      }
+      try {
+        element.innerHTML = meta.static_page.json.pageData;
+      } catch (e) {
+        console.log(e);
+        console.log("Could not fetch page data: ", meta);
       }
       main.default(currentAppData, element)
     }
