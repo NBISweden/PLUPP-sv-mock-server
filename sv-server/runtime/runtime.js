@@ -1,12 +1,29 @@
 const vm = require("node:vm");
 const fs = require("fs")
+
+function waitFor(check, finalize = () => {}, interval = 100) {
+  setTimeout(() => {
+    const result = check();
+    if (result) {
+      finalize();
+    } else {
+      waitFor(check, finalize, interval);
+    }
+  }, interval);
+}
+
 const router = {
+  _finished: false,
   _routes: {},
   get(path, func) {
     this._routes[path] = func
+    waitFor(() => this._finished)
   },
   exec(path, req, res) {
-    this._routes[path](req, res)
+    return this._routes[path](req, res)
+  },
+  finish() {
+    this._finished = true;
   }
 }
 const appDataDefaults = JSON.parse(fs.readFileSync(process.argv[3] || "./appDataDefaults.json", 'utf8'))
@@ -37,11 +54,11 @@ const svContext = vm.createContext(
               url,
               done: (onDone) => {
                 this._onDone = onDone;
-                return requestObject;
+                return this;
               },
               fail: (onFail) => {
                 this._onFail = onFail;
-                return requestObject;
+                return this;
               },
               onDone: (data) => {
                 if (this._onDone) this._onDone(data);
@@ -61,7 +78,7 @@ const svContext = vm.createContext(
       }[module]
     },
   },
-  { microtaskMode: 'afterEvaluate', timeout: 10000 },
+  { timeout: 10000 },
 )
 
 
@@ -82,9 +99,11 @@ const res = {
     console.log(JSON.stringify(data));
   }
 }
+
 try {
-  script.runInContext(svContext, { microtaskMode: 'afterEvaluate', timeout: 10000 })
-  router.exec("/", null, res)
+  script.runInContext(svContext, { timeout: 10000 });
+  router.exec("/", null, res);
+  setImmediate(() => router.finish());
 } catch (e) {
   output.pageData = `<span class="error">${e.name}: ${e.message}</span>`;
   console.log(JSON.stringify(output));
