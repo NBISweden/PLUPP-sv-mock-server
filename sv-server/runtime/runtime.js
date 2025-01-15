@@ -1,6 +1,10 @@
 const vm = require("node:vm");
 const fs = require("fs")
 
+const scriptData = fs.readFileSync(process.argv[2] || "./index.js")
+const appDataDefaults = JSON.parse(fs.readFileSync(process.argv[3] || "./appDataDefaults.json", 'utf8'))
+const renderRoute = process.argv[4] || "/"
+
 function waitFor(check, finalize = () => {}, interval = 100) {
   setTimeout(() => {
     const result = check();
@@ -20,13 +24,16 @@ const router = {
     waitFor(() => this._finished)
   },
   exec(path, req, res) {
-    return this._routes[path](req, res)
+    if (path in this._routes) {
+      return this._routes[path](req, res)
+    } else {
+      throw new Error(`Route ${path} does not exist.`)
+    }
   },
   finish() {
     this._finished = true;
   }
 }
-const appDataDefaults = JSON.parse(fs.readFileSync(process.argv[3] || "./appDataDefaults.json", 'utf8'))
 
 const svContext = vm.createContext(
   {
@@ -82,7 +89,6 @@ const svContext = vm.createContext(
 )
 
 
-const scriptData = fs.readFileSync(process.argv[2] || "./index.js")
 const script = new vm.Script(scriptData)
 const output = {
   pageData: null,
@@ -102,7 +108,7 @@ const res = {
 
 try {
   script.runInContext(svContext, { timeout: 10000 });
-  router.exec("/", null, res);
+  router.exec(renderRoute, null, res);
   setImmediate(() => router.finish());
 } catch (e) {
   output.pageData = `<span class="error">${e.name}: ${e.message}</span>`;

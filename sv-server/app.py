@@ -13,7 +13,7 @@ from fastapi import (
     UploadFile,
     HTTPException,
 )
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel, HttpUrl
@@ -51,9 +51,11 @@ async def upload_app(
     credentials: Annotated[HTTPBasicCredentials, Depends(security)],
     settings=Depends(get_settings),
 ) -> None:
-    app_id = slugify(app_name)
-    app_dir = settings.get("app_dir")
-    app_path = f"{app_dir}/{app_id}"
+    (
+        app_id,
+        app_dir,
+        app_path
+    ) = get_app_info(app_name, settings)
 
     with zipfile.ZipFile(file.file, "r") as zip_ref:
         zip_ref.extractall(app_path)
@@ -82,6 +84,18 @@ async def upload_app(
     )
 
 
+def get_app_info(app_name, settings):
+    app_id = slugify(app_name)
+    app_dir = settings.get("app_dir")
+    app_path = f"{app_dir}/{app_id}"
+
+    return (
+        app_id,
+        app_dir,
+        app_path
+    )
+
+
 @app_router.get("/apps")
 async def list_apps(
     request: Request,
@@ -106,6 +120,21 @@ async def list_apps(
         )
         for app_name in os.listdir(app_dir)
     ]
+
+
+@app_router.get("/app/{app_id}/{route:path}", response_class=HTMLResponse)
+async def evaluate_route(app_id, route, settings=Depends(get_settings)):
+    (
+        _app_id,
+        _app_dir,
+        app_path
+    ) = get_app_info(app_id, settings)
+    route = f"/{route}"
+
+    static_page = await run_script(
+        f"node runtime/runtime.js '{app_path}/index.js' '{app_path}/appDataDefaults.json' '{route}'"
+    )
+    return static_page["json"]["pageData"]
 
 
 @app_router.get("/")
@@ -137,8 +166,8 @@ async def run_script(cmd):
 
     try:
         json_result = json.loads(result)
-    except (json.decoder.JSONDecodeError, TypeError):
-        pass
+    except (json.decoder.JSONDecodeError, TypeError) as error:
+        print(error)
 
     return {
         "result": result,
