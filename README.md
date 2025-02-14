@@ -59,3 +59,12 @@ If you want to test some function without having to rely on an API being availab
 
 ## Custom CSS
 It is possible to add snippets of custom CSS for the page when viewing an app. You can do this by adding a css file in `sv-server/view/app-settings/<addonName>`, where `<addonName>` is found in the apps `dev_properties.json`.
+
+To style only the container of the webapp one could use the following CSS:
+```css
+#root {
+    background: #144836;
+    color: white;
+    font-family: lato;
+}
+```
