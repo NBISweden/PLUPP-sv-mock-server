@@ -26,16 +26,18 @@ async function renderApp(appName, appData, element, configElement) {
   });
 
   async function loadCss(url) {
-    try {
+    const response = await fetch(url);
+    if (response.ok) {
+      const regex = new RegExp(`\.\.\/\/webapp-files\/${appName}\/0\.0\.1`, "gi");
+      const cssData = (await (response).text()).replace(regex, `${urlRoot}/${dataRoot}/resource`);
+
       const link = document.createElement('link');
       link.rel = 'stylesheet';
       link.type = 'text/css';
-      const regex = new RegExp(`\.\.\/\/webapp-files\/${appName}\/0\.0\.1`, "gi");
-      const cssData = (await (await fetch(url)).text()).replace(regex, `${urlRoot}/${dataRoot}/resource`)
       dataUrl = `data:text/css;base64,${btoa(cssData)}`
       link.href = dataUrl;
       document.getElementsByTagName('HEAD')[0].appendChild(link);
-    } catch (e) {
+    } else {
       console.log(`CSS not loaded: ${url}`)
     }
   }
