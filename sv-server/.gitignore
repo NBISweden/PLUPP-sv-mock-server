@@ -3,3 +3,4 @@ dist
 .venv
 view/data-overrides.json
 view/data-overrides/
+view/app-settings/

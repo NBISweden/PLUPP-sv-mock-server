@@ -26,19 +26,24 @@ async function renderApp(appName, appData, element, configElement) {
   });
 
   async function loadCss(url) {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.type = 'text/css';
-    const regex = new RegExp(`\.\.\/\/webapp-files\/${appName}\/0\.0\.1`, "gi");
-    const cssData = (await (await fetch(url)).text()).replace(regex, `${urlRoot}/${dataRoot}/resource`)
-    dataUrl = `data:text/css;base64,${btoa(cssData)}`
-    link.href = dataUrl;
-    document.getElementsByTagName('HEAD')[0].appendChild(link);
+    try {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.type = 'text/css';
+      const regex = new RegExp(`\.\.\/\/webapp-files\/${appName}\/0\.0\.1`, "gi");
+      const cssData = (await (await fetch(url)).text()).replace(regex, `${urlRoot}/${dataRoot}/resource`)
+      dataUrl = `data:text/css;base64,${btoa(cssData)}`
+      link.href = dataUrl;
+      document.getElementsByTagName('HEAD')[0].appendChild(link);
+    } catch (e) {
+      console.log(`CSS not loaded: ${url}`)
+    }
   }
   
   requirejs([appName, "underscore"], function(main, _) {
     async function run() {
       await loadCss(`${dataRoot}/css/main.css`);
+      await loadCss(`${urlRoot}/app-settings/${appName}.css`);
       const meta = await (await fetch(`${urlRoot}/${dataRoot}/_meta.json`)).json();
       const localizationData = await (await fetch(`${urlRoot}/${dataRoot}/i18n/sv.json`)).json();
       const defaults = await (await fetch(`${urlRoot}/${dataRoot}/appDataDefaults.json`)).json();
