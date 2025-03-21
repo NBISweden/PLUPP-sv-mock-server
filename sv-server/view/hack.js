@@ -41,41 +41,43 @@ async function renderApp(appName, appData, element, configElement) {
       console.log(`CSS not loaded: ${url}`)
     }
   }
-  
-  requirejs([appName, "underscore"], function(main, _) {
-    async function run() {
-      await loadCss(`${dataRoot}/css/main.css`);
-      await loadCss(`${urlRoot}/app-settings/${appName}.css`);
-      const meta = await (await fetch(`${urlRoot}/${dataRoot}/_meta.json`)).json();
-      const localizationData = await (await fetch(`${urlRoot}/${dataRoot}/i18n/sv.json`)).json();
-      const defaults = await (await fetch(`${urlRoot}/${dataRoot}/appDataDefaults.json`)).json();
-      const currentAppData = {...defaults.appData, ...appData, ...meta.initialState}
-      if (configElement) {
-        function i18n(term) {
-          return localizationData[term] === undefined ? `{${term}}` : localizationData[term];
-        }
-        const templateData = await (await fetch(`${urlRoot}/${dataRoot}/config/index.html`)).text();
-        const template = _.template(templateData);
-        const configView = template({i18n: i18n});
-        configElement.innerHTML = configView + `<input type="hidden" name="appName" value="${appName}"><input type="submit" value="Submit">`;
-        for (const [key, value] of Object.entries(currentAppData)) {
-          const el = configElement.querySelector(`[name="${key}"]`);
-          if (el) {
-            el.value = value;
+
+  requirejs(
+    [appName, "underscore"],
+    function(main, _) {
+      async function run() {
+        await loadCss(`${dataRoot}/css/main.css`);
+        await loadCss(`${urlRoot}/app-settings/${appName}.css`);
+        const meta = await (await fetch(`${urlRoot}/${dataRoot}/_meta.json`)).json();
+        const localizationData = await (await fetch(`${urlRoot}/${dataRoot}/i18n/sv.json`)).json();
+        const defaults = await (await fetch(`${urlRoot}/${dataRoot}/appDataDefaults.json`)).json();
+        const currentAppData = {...defaults.appData, ...appData, ...meta.initialState}
+        if (configElement) {
+          function i18n(term) {
+            return localizationData[term] === undefined ? `{${term}}` : localizationData[term];
+          }
+          const templateData = await (await fetch(`${urlRoot}/${dataRoot}/config/index.html`)).text();
+          const template = _.template(templateData);
+          const configView = template({i18n: i18n});
+          configElement.innerHTML = configView + `<input type="hidden" name="appName" value="${appName}"><input type="submit" value="Submit">`;
+          for (const [key, value] of Object.entries(currentAppData)) {
+            const el = configElement.querySelector(`[name="${key}"]`);
+            if (el) {
+              el.value = value;
+            }
           }
         }
+        try {
+          element.innerHTML = meta.static_page.json.pageData;
+        } catch (e) {
+          console.log(e);
+          console.log("Could not fetch page data: ", meta);
+        }
+        main.default(currentAppData, element)
       }
-      try {
-        element.innerHTML = meta.static_page.json.pageData;
-      } catch (e) {
-        console.log(e);
-        console.log("Could not fetch page data: ", meta);
-      }
-      main.default(currentAppData, element)
+      run()
     }
-    run()
-  }
-);
+  );
 }
 
 function main() {

@@ -13,7 +13,7 @@ define("requester",
                 const override = (this._dataOverrides || {})[url]
                 if (override && "data" in override) {
                     console.log(`URL response overriden: ${url}`)
-                        return override.data
+                    return override.data
                 } else {
                     if (override && "ref" in override) {
                         console.log(`URL response overriden: ${url}`)
