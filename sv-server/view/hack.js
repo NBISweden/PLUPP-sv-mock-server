@@ -87,12 +87,17 @@ function main() {
   const root = document.getElementById('root')
   const config = document.getElementById('config')
   if (appName === "*") {
-    ["forecast-for-cities", "forecast-for-startpage", "risk-forecast"].forEach((appName) => {
-      root.appendChild(document.createElement("hr"));
-      const appNode = document.createElement("div");
-      root.appendChild(appNode)
-      renderApp(appName, {}, appNode)
-    })
+    async function renderAllApps(urlRoot) {
+      const apps = await (await fetch(`${urlRoot}/apps`)).json();
+      const appNames = apps.map(app => app.name);
+      appNames.forEach((appName) => {
+        root.appendChild(document.createElement("hr"));
+        const appNode = document.createElement("div");
+        root.appendChild(appNode)
+        renderApp(appName, {}, appNode)
+      })
+    }
+    renderAllApps(`http://${window.location.host}`)
   } else if (appName) {
     renderApp(appName, appData, root, config)
   }
