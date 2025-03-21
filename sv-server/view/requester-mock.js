@@ -2,15 +2,15 @@ define("requester",
     [],
     function() {
         return {
+            _dataOverrides: null,
             async doGet({url}) {
-                let dataOverrides = {}
                 try {
-                    dataOverrides = await (await fetch("data-overrides.json")).json();
+                    this._dataOverrides = this._dataOverrides || await (await fetch("data-overrides.json")).json();
                 } catch (e) {
                     console.error(e);
                 }
 
-                const override = dataOverrides[url]
+                const override = (this._dataOverrides || {})[url]
                 if (override && "data" in override) {
                     console.log(`URL response overriden: ${url}`)
                         return override.data
