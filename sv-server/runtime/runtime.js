@@ -30,6 +30,9 @@ const router = {
       throw new Error(`Route ${path} does not exist.`)
     }
   },
+  getUrl(route) {
+    return route;
+  },
   finish() {
     this._finished = true;
   }
@@ -42,6 +45,14 @@ const svContext = vm.createContext(
         "router": router,
         "PortletContextUtil": {
           getCurrentPage() {}
+        },
+        "SiteCookieUtil": {
+          resolveSiteCookieByIdentifier(identifier) {
+            return {};
+          },
+          checkUserConsent(node) {
+            return true;
+          }
         },
         "Properties": {
           get() {}
@@ -88,28 +99,39 @@ const svContext = vm.createContext(
   { timeout: 10000 },
 )
 
+const request = {
+}
 
 const script = new vm.Script(scriptData)
 const output = {
   pageData: null,
   initialState: null,
+  cookie: null,
+  contentType: "text/html; charset=utf-8"
 }
 
 const res = {
   agnosticRender(data, initialState) {
     output.pageData = data;
     output.initialState = initialState;
-    console.log(JSON.stringify(output));
+    output.contentType = "text/html; charset=utf-8";
   },
   json(data) {
-    console.log(JSON.stringify(data));
-  }
+    output.pageData = JSON.stringify(data);
+    output.contentType = "application/json";
+  },
+  cookie(cookie) {
+    output.cookie = cookie;
+  },
 }
 
 try {
   script.runInContext(svContext, { timeout: 10000 });
-  router.exec(renderRoute, null, res);
-  setImmediate(() => router.finish());
+  router.exec(renderRoute, request, res);
+  setImmediate(() => {
+    router.finish();
+  });
+  console.log(JSON.stringify(output));
 } catch (e) {
   output.pageData = `<span class="error">${e.name}: ${e.message}</span>`;
   console.log(JSON.stringify(output));

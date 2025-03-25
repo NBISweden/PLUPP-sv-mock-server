@@ -13,7 +13,7 @@ from fastapi import (
     UploadFile,
     HTTPException,
 )
-from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.responses import RedirectResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel, HttpUrl
@@ -122,7 +122,7 @@ async def list_apps(
     ]
 
 
-@app_router.get("/app/{app_id}/{route:path}", response_class=HTMLResponse)
+@app_router.get("/app/{app_id}/{route:path}")
 async def evaluate_route(app_id, route, settings=Depends(get_settings)):
     (
         _app_id,
@@ -134,7 +134,34 @@ async def evaluate_route(app_id, route, settings=Depends(get_settings)):
     static_page = await run_script(
         f"node runtime/runtime.js '{app_path}/index.js' '{app_path}/appDataDefaults.json' '{route}'"
     )
-    return static_page["json"]["pageData"]
+    data = static_page["json"]
+    content_type = data.get("contentType", "text/html; charset=utf-8")
+    page_data = data.get("pageData", "")
+    response = HTMLResponse(content=page_data, status_code=404)
+    cookie = data.get("cookie")
+
+    if content_type == "application/json":
+        response = JSONResponse(content=json.loads(page_data), status_code=200)
+    elif content_type == "text/html; charset=utf-8":
+        response = HTMLResponse(content=page_data, status_code=200)
+    if cookie:
+        key = cookie.get("name")
+        value = cookie.get("value")
+        max_age = cookie.get("maxAge")
+        httponly = cookie.get("httpOnly")
+        secure = cookie.get("secure")
+        domain = cookie.get("domain")
+        samesite = cookie.get("sameSite", "").lower()
+        response.set_cookie(
+            key,
+            value,
+            max_age=max_age,
+            httponly=httponly,
+            secure=secure,
+            domain = domain,
+            samesite=samesite,
+        )
+    return response
 
 
 @app_router.get("/")
