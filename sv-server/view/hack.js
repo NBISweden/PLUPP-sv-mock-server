@@ -1,4 +1,4 @@
-async function renderApp(appName, appData, element, configElement) {
+async function renderApp(appName, instanceId, appData, element, configElement) {
   const urlParams = new URLSearchParams(window.location.search);
   const dataRoot = `../app_data/${appName}`
   const urlRoot = `http://${window.location.host}/view`
@@ -22,6 +22,7 @@ async function renderApp(appName, appData, element, configElement) {
       [appName]: `${dataRoot}/main`,
       'requester': 'requester-mock',
       'underscore': 'vendor/underscore',
+      'router': 'router-mock',
     }
   });
 
@@ -43,9 +44,10 @@ async function renderApp(appName, appData, element, configElement) {
   }
 
   requirejs(
-    [appName, "underscore"],
-    function(main, _) {
+    [appName, "underscore", "router"],
+    function(main, _, router) {
       async function run() {
+        const baseUrl = `http://${window.location.host}/app/${appName}/${instanceId}`
         await loadCss(`${dataRoot}/css/main.css`);
         await loadCss(`${urlRoot}/app-settings/${appName}.css`);
         const meta = await (await fetch(`${urlRoot}/${dataRoot}/_meta.json`)).json();
@@ -68,12 +70,18 @@ async function renderApp(appName, appData, element, configElement) {
           }
         }
         try {
-          element.innerHTML = meta.static_page.json.pageData;
+          router.setUrlBase(baseUrl);
+          const initialPage = await (await fetch(router.getUrl("/"))).text()
+          element.innerHTML = initialPage;
         } catch (e) {
           console.log(e);
           console.log("Could not fetch page data: ", meta);
         }
-        main.default(currentAppData, element)
+        const appElement = document.getElementById(instanceId)
+        const initialStateId = appElement.getAttribute("data-initial-state-id")
+        const initialState = JSON.parse(document.getElementById(initialStateId).textContent)
+        router.setUrlBase(baseUrl);
+        main.default({...currentAppData, ...initialState}, appElement)
       }
       run()
     }
@@ -90,16 +98,16 @@ function main() {
     async function renderAllApps(urlRoot) {
       const apps = await (await fetch(`${urlRoot}/apps`)).json();
       const appNames = apps.map(app => app.name);
-      appNames.forEach((appName) => {
+      appNames.forEach(async (appName, index) => {
         root.appendChild(document.createElement("hr"));
         const appNode = document.createElement("div");
         root.appendChild(appNode)
-        renderApp(appName, {}, appNode)
+        await renderApp(appName, `app-${index}`, {}, appNode)
       })
     }
     renderAllApps(`http://${window.location.host}`)
   } else if (appName) {
-    renderApp(appName, appData, root, config)
+    renderApp(appName, "single-app", appData, root, config)
   }
 }
 

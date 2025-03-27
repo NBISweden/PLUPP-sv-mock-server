@@ -4,6 +4,8 @@ const fs = require("fs")
 const scriptData = fs.readFileSync(process.argv[2] || "./index.js")
 const appDataDefaults = JSON.parse(fs.readFileSync(process.argv[3] || "./appDataDefaults.json", 'utf8'))
 const renderRoute = process.argv[4] || "/"
+const instanceId = process.argv[5] || "app"
+const cookieData = JSON.parse(process.argv[6] || "{}")
 
 function waitFor(check, finalize = () => {}, interval = 100) {
   setTimeout(() => {
@@ -100,6 +102,7 @@ const svContext = vm.createContext(
 )
 
 const request = {
+  cookies: cookieData
 }
 
 const script = new vm.Script(scriptData)
@@ -112,7 +115,8 @@ const output = {
 
 const res = {
   agnosticRender(data, initialState) {
-    output.pageData = data;
+    const initialStateId = `${instanceId}:initial-state`
+    output.pageData = `<div id="${instanceId}" data-initial-state-id="${initialStateId}">${data}</div><script id="${initialStateId}" type="application/json">${JSON.stringify(initialState, undefined, "  ")}</script>`;
     output.initialState = initialState;
     output.contentType = "text/html; charset=utf-8";
   },

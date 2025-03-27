@@ -122,8 +122,8 @@ async def list_apps(
     ]
 
 
-@app_router.get("/app/{app_id}/{route:path}")
-async def evaluate_route(app_id, route, settings=Depends(get_settings)):
+@app_router.get("/app/{app_id}/{instance_id}/{route:path}")
+async def evaluate_route(request: Request, app_id, instance_id, route, settings=Depends(get_settings)):
     (
         _app_id,
         _app_dir,
@@ -131,8 +131,13 @@ async def evaluate_route(app_id, route, settings=Depends(get_settings)):
     ) = get_app_info(app_id, settings)
     route = f"/{route}"
 
+    cookie_data = json.dumps({
+        key: value
+        for key, value in request.cookies.items()
+    })
+
     static_page = await run_script(
-        f"node runtime/runtime.js '{app_path}/index.js' '{app_path}/appDataDefaults.json' '{route}'"
+        f"node runtime/runtime.js '{app_path}/index.js' '{app_path}/appDataDefaults.json' '{route}' '{instance_id}' '{cookie_data}'"
     )
     data = static_page["json"]
     content_type = data.get("contentType", "text/html; charset=utf-8")
@@ -158,7 +163,7 @@ async def evaluate_route(app_id, route, settings=Depends(get_settings)):
             max_age=max_age,
             httponly=httponly,
             secure=secure,
-            domain = domain,
+            domain=domain,
             samesite=samesite,
         )
     return response
