@@ -53,7 +53,18 @@ async function renderApp(appName, instanceId, appData, element, configElement) {
         const meta = await (await fetch(`${urlRoot}/${dataRoot}/_meta.json`)).json();
         const localizationData = await (await fetch(`${urlRoot}/${dataRoot}/i18n/sv.json`)).json();
         const defaults = await (await fetch(`${urlRoot}/${dataRoot}/appDataDefaults.json`)).json();
-        const currentAppData = {...defaults.appData, ...appData, ...meta.initialState}
+        try {
+          router.setUrlBase(baseUrl);
+          const initialPage = await (await fetch(router.getUrl("/"))).text()
+          element.innerHTML = initialPage;
+        } catch (e) {
+          console.log(e);
+          console.log("Could not fetch page data: ", meta);
+        }
+        const appElement = document.getElementById(instanceId)
+        const initialStateId = appElement.getAttribute("data-initial-state-id")
+        const initialState = JSON.parse(document.getElementById(initialStateId).textContent)
+        const currentAppData = {...defaults.appData, ...initialState, ...appData}
         if (configElement) {
           function i18n(term) {
             return localizationData[term] === undefined ? `{${term}}` : localizationData[term];
@@ -69,19 +80,8 @@ async function renderApp(appName, instanceId, appData, element, configElement) {
             }
           }
         }
-        try {
-          router.setUrlBase(baseUrl);
-          const initialPage = await (await fetch(router.getUrl("/"))).text()
-          element.innerHTML = initialPage;
-        } catch (e) {
-          console.log(e);
-          console.log("Could not fetch page data: ", meta);
-        }
-        const appElement = document.getElementById(instanceId)
-        const initialStateId = appElement.getAttribute("data-initial-state-id")
-        const initialState = JSON.parse(document.getElementById(initialStateId).textContent)
         router.setUrlBase(baseUrl);
-        main.default({...currentAppData, ...initialState}, appElement)
+        main.default(currentAppData, appElement)
       }
       run()
     }
