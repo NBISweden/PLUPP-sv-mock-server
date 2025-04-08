@@ -162,7 +162,7 @@ async def evaluate_route(request: Request, app_id, instance_id, route, settings=
         response.set_cookie(
             key,
             value,
-            max_age=max_age,
+            max_age=(None if max_age == -1 else max_age),
             httponly=httponly,
             secure=secure,
             domain=domain,
