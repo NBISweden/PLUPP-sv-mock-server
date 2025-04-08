@@ -6,6 +6,7 @@ const appDataDefaults = JSON.parse(fs.readFileSync(process.argv[3] || "./appData
 const renderRoute = process.argv[4] || "/"
 const instanceId = process.argv[5] || "app"
 const cookieData = JSON.parse(process.argv[6] || "{}")
+const method = (process.argv[7] || "GET").toUpperCase()
 
 function waitFor(check, finalize = () => {}, interval = 100) {
   setTimeout(() => {
@@ -20,14 +21,23 @@ function waitFor(check, finalize = () => {}, interval = 100) {
 
 const router = {
   _finished: false,
-  _routes: {},
+  _get: {},
+  _post: {},
   get(path, func) {
-    this._routes[path] = func
+    this._get[path] = func
     waitFor(() => this._finished)
   },
-  exec(path, req, res) {
-    if (path in this._routes) {
-      return this._routes[path](req, res)
+  post(path, func) {
+    this._post[path] = func
+    waitFor(() => this._finished)
+  },
+  exec(path, req, res, method = "GET") {
+    const routes = {
+      "GET": this._get,
+      "POST": this._post,
+    }[method.toUpperCase()] || {}
+    if (path in routes) {
+      return routes[path](req, res)
     } else {
       throw new Error(`Route ${path} does not exist.`)
     }
@@ -119,19 +129,26 @@ const res = {
     output.pageData = `<div id="${instanceId}" data-initial-state-id="${initialStateId}">${data}</div><script id="${initialStateId}" type="application/json">${JSON.stringify(initialState, undefined, "  ")}</script>`;
     output.initialState = initialState;
     output.contentType = "text/html; charset=utf-8";
+    return this;
   },
   json(data) {
     output.pageData = JSON.stringify(data);
     output.contentType = "application/json";
+    return this;
   },
   cookie(cookie) {
     output.cookie = cookie;
+    return this;
   },
+  status(statusCode) {
+    output.statusCode = statusCode;
+    return this;
+  }
 }
 
 try {
   script.runInContext(svContext, { timeout: 10000 });
-  router.exec(renderRoute, request, res);
+  router.exec(renderRoute, request, res, method);
   setImmediate(() => {
     router.finish();
   });

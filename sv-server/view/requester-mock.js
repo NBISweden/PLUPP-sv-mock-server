@@ -24,6 +24,12 @@ define("requester",
                     const data = await response.json()
                     return data
                 }
+            },
+
+            async doPost({url}) {
+                const response = await fetch(url, {method: "POST"})
+                const data = await response.json()
+                return data
             }
         }
     }
