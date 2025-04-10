@@ -93,17 +93,27 @@ async function getOverrideFetch(overridesUrl) {
 
   async function overrideFetch(url, ...args) {
     const override = (_dataOverrides || {})[url]
-    if (override && "data" in override) {
-        console.log(`URL response overriden: ${url}`)
-        return new Response(JSON.serialize(override.data))
-    } else {
-        if (override && "ref" in override) {
-            console.log(`URL response overriden: ${url}`)
-            url = override.ref
+    if (override) {
+      let response = null
+      if ("data" in override) {
+        try {
+          response = new Response(JSON.serialize(override.data))
+        } catch (e) {
+          console.log(`Failed to override URL: ${url}`, e)
         }
-        console.log(`Fetch: ${url}`)
-        return await fetch(url, ...args)
+      } else if ("content" in override) {
+        response = new Response(override.content)
+      } else if ("ref" in override) {
+        console.log(`URL overriden: ${url} -> ${override.ref}`)
+        url = override.ref
+      }
+      if (response) {
+        console.log(`URL response overriden: ${url}`)
+        return response
+      }
     }
+    console.log(`Fetch: ${url}`)
+    return await fetch(url, ...args)
   }
   return overrideFetch
 }
