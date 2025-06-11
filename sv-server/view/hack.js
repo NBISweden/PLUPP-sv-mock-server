@@ -71,13 +71,18 @@ async function renderApp(appName, instanceId, appData, element, configElement, l
           }
           const templateData = await (await localFetch(`${urlRoot}/${dataRoot}/config/index.html`)).text();
           const template = _.template(templateData);
-          const configView = template({i18n: i18n});
-          configElement.innerHTML = configView + `<input type="hidden" name="appName" value="${appName}"><input type="submit" value="Submit">`;
-          for (const [key, value] of Object.entries(currentAppData)) {
-            const el = configElement.querySelector(`[name="${key}"]`);
-            if (el) {
-              el.value = value;
+          try {
+            const configView = template({i18n: i18n});
+            configElement.innerHTML = configView + `<input type="hidden" name="appName" value="${appName}"><input type="submit" value="Submit">`;
+            for (const [key, value] of Object.entries(currentAppData)) {
+              const el = configElement.querySelector(`[name="${key}"]`);
+              if (el) {
+                el.value = value;
+              }
             }
+          } catch(e) {
+            configElement.innerHTML = "Failed to create settings.";
+            console.warn("Failed to create settings.", e);
           }
         }
         router.setUrlBase(baseUrl);
